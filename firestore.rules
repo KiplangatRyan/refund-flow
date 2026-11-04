@@ -1,0 +1,84 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Default deny all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Health check path for validating connection
+    match /test/connection {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        request.auth.token.email == "kiplangatryan05@gmail.com" ||
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "admin")
+      );
+    }
+
+    function isFinanceOrAdmin() {
+      return isSignedIn() && (
+        request.auth.token.email == "kiplangatryan05@gmail.com" ||
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+         (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ["admin", "finance_agent"]))
+      );
+    }
+
+    // User profiles
+    match /users/{userId} {
+      allow get: if isOwner(userId) || isFinanceOrAdmin();
+      allow list: if isFinanceOrAdmin();
+      allow create: if isOwner(userId);
+      allow update: if isOwner(userId) || isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // Refund requests
+    match /refund_requests/{refundId} {
+      allow get: if isFinanceOrAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
+      allow list: if isFinanceOrAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow update: if isFinanceOrAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
+      allow delete: if isAdmin();
+    }
+
+    // Policy rules
+    match /policy_rules/{ruleId} {
+      allow read: if isSignedIn();
+      allow write: if isFinanceOrAdmin();
+    }
+
+    // Gateway events
+    match /gateway_events/{eventId} {
+      allow read: if isFinanceOrAdmin();
+      allow write: if isFinanceOrAdmin();
+    }
+
+    // Audit logs
+    match /audit_logs/{logId} {
+      allow read: if isFinanceOrAdmin();
+      allow create: if isSignedIn();
+      allow update, delete: if false; // Immutable audit log
+    }
+
+    // Orders catalog
+    match /orders/{orderId} {
+      allow read: if isSignedIn();
+      allow write: if isFinanceOrAdmin();
+    }
+  }
+}

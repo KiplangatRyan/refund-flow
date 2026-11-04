@@ -1,0 +1,6 @@
+{
+  "name": "RefundFlow - Autonomous Refund & Dispute Resolution Engine",
+  "description": "Modern e-commerce and fintech refund management platform with automated policy rules, dispute handling, instant store credit incentives, and GitHub deployment integration.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

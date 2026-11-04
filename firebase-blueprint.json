@@ -1,0 +1,140 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "App user profile with role and identity",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "email": { "type": "string", "maxLength": 256 },
+        "displayName": { "type": "string", "maxLength": 128 },
+        "photoURL": { "type": "string", "maxLength": 512 },
+        "role": { "type": "string", "enum": ["admin", "finance_agent", "customer"] },
+        "createdAt": { "type": "string", "maxLength": 64 }
+      },
+      "required": ["id", "email", "role"]
+    },
+    "RefundRequest": {
+      "title": "RefundRequest",
+      "description": "Refund dispute and authorization claim record",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "orderNumber": { "type": "string", "maxLength": 64 },
+        "orderId": { "type": "string", "maxLength": 128 },
+        "createdAt": { "type": "string", "maxLength": 64 },
+        "updatedAt": { "type": "string", "maxLength": 64 },
+        "customerName": { "type": "string", "maxLength": 128 },
+        "customerEmail": { "type": "string", "maxLength": 256 },
+        "customerTier": { "type": "string", "enum": ["standard", "vip", "first_time"] },
+        "fraudRiskScore": { "type": "number" },
+        "requestedPayoutMethod": { "type": "string", "enum": ["store_credit_bonus", "original_payment", "direct_exchange"] },
+        "returnMethod": { "type": "string", "enum": ["qr_dropoff", "courier_pickup", "keep_item"] },
+        "status": { "type": "string", "enum": ["needs_review", "auto_approved", "in_transit", "inspected", "settled", "rejected", "dispute"] },
+        "requestedSubtotal": { "type": "number" },
+        "taxRefund": { "type": "number" },
+        "shippingRefund": { "type": "number" },
+        "restockingFee": { "type": "number" },
+        "storeCreditBonus": { "type": "number" },
+        "netRefundAmount": { "type": "number" },
+        "trackingNumber": { "type": "string", "maxLength": 128 },
+        "qrCodeToken": { "type": "string", "maxLength": 128 },
+        "resolutionNotes": { "type": "string", "maxLength": 1024 },
+        "decisionBy": { "type": "string", "maxLength": 128 },
+        "decisionDate": { "type": "string", "maxLength": 64 },
+        "gatewayTransactionId": { "type": "string", "maxLength": 128 }
+      },
+      "required": ["id", "userId", "orderNumber", "status", "requestedSubtotal", "netRefundAmount"]
+    },
+    "PolicyRule": {
+      "title": "PolicyRule",
+      "description": "Autonomous refund policy criteria and thresholds",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "name": { "type": "string", "maxLength": 256 },
+        "description": { "type": "string", "maxLength": 1024 },
+        "enabled": { "type": "boolean" },
+        "type": { "type": "string", "enum": ["auto_approve", "keep_item", "store_credit_bonus", "fraud_threshold", "return_window"] }
+      },
+      "required": ["id", "name", "enabled", "type"]
+    },
+    "GatewayEvent": {
+      "title": "GatewayEvent",
+      "description": "Payment gateway webhook transaction event",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "type": { "type": "string", "maxLength": 64 },
+        "timestamp": { "type": "string", "maxLength": 64 },
+        "amount": { "type": "number" },
+        "currency": { "type": "string", "maxLength": 8 },
+        "status": { "type": "string", "enum": ["succeeded", "processing", "requires_action", "failed"] },
+        "refundId": { "type": "string", "maxLength": 128 },
+        "orderNumber": { "type": "string", "maxLength": 64 },
+        "details": { "type": "string", "maxLength": 1024 }
+      },
+      "required": ["id", "type", "timestamp", "amount", "status", "refundId"]
+    },
+    "AuditLog": {
+      "title": "AuditLog",
+      "description": "Immutable compliance and dispute resolution audit ledger",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "timestamp": { "type": "string", "maxLength": 64 },
+        "actor": { "type": "string", "maxLength": 128 },
+        "action": { "type": "string", "maxLength": 128 },
+        "refundId": { "type": "string", "maxLength": 128 },
+        "orderNumber": { "type": "string", "maxLength": 64 },
+        "details": { "type": "string", "maxLength": 1024 },
+        "badge": { "type": "string", "maxLength": 64 }
+      },
+      "required": ["id", "timestamp", "actor", "action", "refundId", "details"]
+    },
+    "Order": {
+      "title": "Order",
+      "description": "Historical e-commerce order record",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "orderNumber": { "type": "string", "maxLength": 64 },
+        "orderDate": { "type": "string", "maxLength": 64 },
+        "customerName": { "type": "string", "maxLength": 128 },
+        "customerEmail": { "type": "string", "maxLength": 256 },
+        "subtotal": { "type": "number" },
+        "shipping": { "type": "number" },
+        "tax": { "type": "number" },
+        "total": { "type": "number" }
+      },
+      "required": ["id", "orderNumber", "customerEmail", "total"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profile with role and identification"
+    },
+    "/refund_requests/{refundId}": {
+      "schema": "RefundRequest",
+      "description": "Customer refund claims and dispute tracking"
+    },
+    "/policy_rules/{ruleId}": {
+      "schema": "PolicyRule",
+      "description": "Autonomous refund policy criteria and thresholds"
+    },
+    "/gateway_events/{eventId}": {
+      "schema": "GatewayEvent",
+      "description": "Real-time payment gateway webhook transaction log"
+    },
+    "/audit_logs/{logId}": {
+      "schema": "AuditLog",
+      "description": "Immutable compliance and dispute resolution audit ledger"
+    },
+    "/orders/{orderId}": {
+      "schema": "Order",
+      "description": "Historical e-commerce orders for intake verification"
+    }
+  }
+}
